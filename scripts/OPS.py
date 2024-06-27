@@ -37,7 +37,7 @@ def accion(db_data):
     for oid_puerto, fsp_puerto in map_ports.items():
         if fsp_puerto == fsp_buscado:
             get_serial = Get(olt_devices[str(db_data.olt)],os.environ['SNMP_READ'],f"1.3.6.1.4.1.2011.6.128.1.1.2.43.1.3.{oid_puerto}.{db_data.onu_id}")
-            print(get_serial)
+            print(get_serial[1])
             print(f"1.3.6.1.4.1.2011.6.128.1.1.2.43.1.3.{oid_puerto}.{db_data.onu_id}")
     return "Succefully"
     # value = Set(olt_devices[str(returned.olt)],os.environ['SNMP_READ'],"1.3.6.1.4.1.2011.6.128.1.1.2.46.1.1.4194312960.19",operation)
