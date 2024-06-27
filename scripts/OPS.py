@@ -23,8 +23,8 @@ def client_operate(data):
         }
         else:
             print(f"Client Get Succefully {returned.contract} {returned.name_1}")
-            accion(returned)
-        return data
+            resp = accion(returned)
+        return resp
     except Exception as e:
         session.rollback()
         raise e  # o maneja la excepción de otra manera (registra el error, devuelve un mensaje, etc.)
