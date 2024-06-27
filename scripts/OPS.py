@@ -1,25 +1,43 @@
 from db.connection import session,conn
 from models.client import client_db
+from puresnmp_olt.accions import Set,Get
+from puresnmp_olt.tools import ascii_to_hex
+from config.definitions import olt_devices,map_ports
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def client_operate(data):
     action = data["action"]
-    operation = "activate" if "R" in action else "deactivate"
+    operation = 1 if "R" in action else 2   #1 is active and 2 is deactivate
     resulted_operation = "active" if "R" in action else "deactivated"
     result = "Reactivado" if "R" in action else "Suspendido"
 
     try:
         returned = session.query(client_db).filter(client_db.contract == data['contract']).first()
         if returned == None:
-            return "Cliente No existe en la DB"
+            return {
+            "message": "The required OLT & ONT does not exists",
+            "contract": data["contract"],
+        }
         else:
             print(f"Client Get Succefully {returned.contract} {returned.name_1}")
-        return data
+        # return data
     except Exception as e:
         session.rollback()
         raise e  # o maneja la excepción de otra manera (registra el error, devuelve un mensaje, etc.)
     finally:
         session.close()
         conn.close()
+    fsp_buscado = f"{str(data['fsp'])}"
+    for clave, oid_puerto in map_ports.items():
+        if oid_puerto == fsp_buscado:
+            get_serial = Get(olt_devices[str(returned.olt)],os.environ['SNMP_READ'],f"1.3.6.1.4.1.2011.6.128.1.1.2.43.1.3.{oid_puerto}.{data['onu_id']}")
+            print(ascii_to_hex(get_serial))
+            print(f"1.3.6.1.4.1.2011.6.128.1.1.2.43.1.3.{oid_puerto}.{data['onu_id']}")
+    # value = Set(olt_devices[str(returned.olt)],os.environ['SNMP_READ'],"1.3.6.1.4.1.2011.6.128.1.1.2.46.1.1.4194312960.19",operation)
+    # print(value)
     # payload["lookup_type"] = "C"
     # payload["lookup_value"] = {"contract":data["contract"], "olt": data.get("olt") or "*"}
     # req = db_request(endpoints["get_client"], payload)
