@@ -11,6 +11,7 @@ async def ops_clients():
 async def ops_clients(request: Request):
     body = await request.body()  # Obtener el cuerpo de la solicitud
     data = json.loads(body) 
-    with open(f"datosdelodoo.json", "a") as archivo_json:
-        json.dump(data, archivo_json, indent=4)
+    # with open(f"datosdelodoo.json", "a") as archivo_json:
+    #     json.dump(data, archivo_json, indent=4)
+    print(data)
     return data
