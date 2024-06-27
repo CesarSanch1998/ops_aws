@@ -23,19 +23,23 @@ def client_operate(data):
         }
         else:
             print(f"Client Get Succefully {returned.contract} {returned.name_1}")
-        # return data
+            accion(returned)
+        return data
     except Exception as e:
         session.rollback()
         raise e  # o maneja la excepción de otra manera (registra el error, devuelve un mensaje, etc.)
     finally:
         session.close()
         conn.close()
-    fsp_buscado = f"{str(returned.fsp)}"
+
+def accion(db_data):
+    fsp_buscado = f"{str(db_data.fsp)}"
     for clave, oid_puerto in map_ports.items():
         if oid_puerto == fsp_buscado:
-            get_serial = Get(olt_devices[str(returned.olt)],os.environ['SNMP_READ'],f"1.3.6.1.4.1.2011.6.128.1.1.2.43.1.3.{oid_puerto}.{returned.onu_id}")
+            get_serial = Get(olt_devices[str(db_data.olt)],os.environ['SNMP_READ'],f"1.3.6.1.4.1.2011.6.128.1.1.2.43.1.3.{oid_puerto}.{db_data.onu_id}")
             print(ascii_to_hex(get_serial))
-            print(f"1.3.6.1.4.1.2011.6.128.1.1.2.43.1.3.{oid_puerto}.{returned.onu_id}")
+            print(f"1.3.6.1.4.1.2011.6.128.1.1.2.43.1.3.{oid_puerto}.{db_data.onu_id}")
+    return "Succefully"
     # value = Set(olt_devices[str(returned.olt)],os.environ['SNMP_READ'],"1.3.6.1.4.1.2011.6.128.1.1.2.46.1.1.4194312960.19",operation)
     # print(value)
     # payload["lookup_type"] = "C"
