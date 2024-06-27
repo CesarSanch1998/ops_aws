@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request
 import json
+from scripts.OPS import *
 
 OPS_request = APIRouter()
 
@@ -12,8 +13,6 @@ async def ops_clients(request: Request):
     body = await request.body()  # Obtener el cuerpo de la solicitud
     data = json.loads(body) 
     for client in data["clients"]:
-        
-    # with open(f"datosdelodoo.json", "a") as archivo_json:
-    #     json.dump(data, archivo_json, indent=4)
-        print(client)
+        res = client_operate(client)
+        print(res)
     return data
