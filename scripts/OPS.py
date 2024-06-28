@@ -26,10 +26,14 @@ async def client_operate(data):
         else:
             print(f"Client Get Succefully {returned.contract} {returned.name_1}")
             resp = await comparer(returned,operation)
-            filename = "registro_corte_" + datetime.now().strftime("%Y-%m-%d") + ".json"
-            with open(filename, mode='a') as f:
-                json_string = json.dumps(resp, indent=4)
-                f.write(json_string)
+            try:
+                filename = "registro_corte_" + datetime.now().strftime("%Y-%m-%d") + ".json"
+                with open(filename, mode='a') as f:
+                    json_string = json.dumps(resp, indent=4)
+                    f.write(json_string)
+            except PermissionError:
+                print(f"Error: No tienes permiso para escribir en el archivo {filename}")
+            
         return resp
     except Exception as e:
         session.rollback()
