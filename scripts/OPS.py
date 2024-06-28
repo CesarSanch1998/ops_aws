@@ -1,18 +1,20 @@
 from db.connection import session,conn
 from models.client import client_db
-from puresnmp_olt.accions import Set,Get
+from puresnmp_olt.accions import Set,Set_async,Get,MultiWalk ,Get_async
 from puresnmp_olt.tools import ascii_to_hex
 from config.definitions import olt_devices,map_ports
 import os
+import json
+from datetime import datetime
 from dotenv import load_dotenv
+
 
 load_dotenv()
 
-def client_operate(data):
+async def client_operate(data):
     action = data["action"]
     operation = 1 if "R" in action else 2   #1 is active and 2 is deactivate
-    resulted_operation = "active" if "R" in action else "deactivated"
-    result = "Reactivado" if "R" in action else "Suspendido"
+    
 
     try:
         returned = session.query(client_db).filter(client_db.contract == data['contract']).first()
@@ -23,7 +25,11 @@ def client_operate(data):
         }
         else:
             print(f"Client Get Succefully {returned.contract} {returned.name_1}")
-            resp = accion(returned)
+            resp = await comparer(returned,operation)
+            filename = "registro_corte_" + datetime.now().strftime("%Y-%m-%d") + ".json"
+            with open(filename, mode='a') as f:
+                json_string = json.dumps(resp, indent=4)
+                f.write(json_string)
         return resp
     except Exception as e:
         session.rollback()
@@ -32,47 +38,44 @@ def client_operate(data):
         session.close()
         conn.close()
 
-def accion(db_data):
+async def comparer(db_data,operation):
+
     fsp_buscado = f"{str(db_data.fsp)}"
     for oid_puerto, fsp_puerto in map_ports.items():
         if fsp_puerto == fsp_buscado:
-            get_serial = Get(olt_devices[str(db_data.olt)],os.environ['SNMP_READ'],f"1.3.6.1.4.1.2011.6.128.1.1.2.43.1.3.{oid_puerto}.{db_data.onu_id}")
-            print(get_serial)
-            print(olt_devices[str(db_data.olt)])
-            print(os.environ['SNMP_READ'])
-            print(f"1.3.6.1.4.1.2011.6.128.1.1.2.43.1.3.{oid_puerto}.{db_data.onu_id}")
-    return "Succefully"
-    # value = Set(olt_devices[str(returned.olt)],os.environ['SNMP_READ'],"1.3.6.1.4.1.2011.6.128.1.1.2.46.1.1.4194312960.19",operation)
-    # print(value)
-    # payload["lookup_type"] = "C"
-    # payload["lookup_value"] = {"contract":data["contract"], "olt": data.get("olt") or "*"}
-    # req = db_request(endpoints["get_client"], payload)
+            oid,get_serial = await Get_async(olt_devices[str(db_data.olt)],os.environ['SNMP_READ'],f"1.3.6.1.4.1.2011.6.128.1.1.2.43.1.3.{oid_puerto}.{db_data.onu_id}")
+            print(oid)
+            serial_up = ascii_to_hex(get_serial).upper()
+            if serial_up == db_data.sn:
+                print(f"Client SN similar {db_data.contract} {db_data.name_1}")
+                resp = await action(db_data,oid_puerto,operation)
+                return resp
+            else:
+                print("Client SN not similar")
+                resp = {
+                "message": f"Sn not similar SN-OLT:{serial_up} SN-DB:{db_data.sn}",
+                "contract": db_data.contract,
+            }
+                return resp
+            
+    return resp
 
-    # if req["data"] is None:
-    #     return {
-    #         "message": "The required OLT & ONT does not exists",
-    #         "contract": data["contract"],
-    #     }
+async def action(db_data,oid_puerto,operation):
+    resulted_operation = "active" if  operation == 1 else "deactivated"
+    result = "Reactivado" if operation == 1 else "Suspendido"
 
-    # client = req["data"]
-    # (command, quit_ssh) = ssh(olt_devices[str(client["olt"])])
-    # command(f'interface gpon {client["frame"]}/{client["slot"]}')
-    # command(f'ont {operation} {client["port"]} {client["onu_id"]}')
+    change_status = await Set_async(olt_devices[str(db_data.olt)],os.environ['SNMP_READ'],f"1.3.6.1.4.1.2011.6.128.1.1.2.46.1.1.{oid_puerto}.{db_data.onu_id}",operation,'int')
+    # print(change_status)
+    if change_status['Cod'] == 404:
+        # print("Error")
+        return {
+            "message": "No such name/oid",
+            "contract": db_data.contract,
+        }
+    elif change_status['Cod'] == 200:
+        print(f"Client Changed State {db_data.contract} {db_data.name_1} to {resulted_operation}")
+        return {
+            "message": f"Client Changed State {db_data.name_1} {db_data.name_2} to {resulted_operation}",
+            "contract": db_data.contract,
+        }
 
-    # payload["change_field"] = "OX"
-    # payload["new_values"] = {"state": resulted_operation}
-    # req = db_request(endpoints["update_client"], payload)
-    # message = f'Cliente {client["name_1"]} {client["name_2"]} {client["contract"]} ha sido {result}'
-    # quit_ssh()
-
-    # return {
-    #     "message": message,
-    #     "name": f'{client["name_1"]} {client["name_2"]} {client["contract"]}',
-    #     "fspi": client["fspi"],
-    #     "olt": client["olt"],
-    #     "frame": client["frame"],
-    #     "slot": client["slot"],
-    #     "port": client["port"],
-    #     "onu_id": client["onu_id"],
-    #     "state": resulted_operation,
-    # }
