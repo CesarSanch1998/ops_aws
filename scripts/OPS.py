@@ -12,16 +12,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 async def client_operate(data):
-    action = data["action"]
+    action = data.action
     operation = 1 if "R" in action else 2   #1 is active and 2 is deactivate
     
 
     try:
-        returned = session.query(client_db).filter(client_db.contract == data['contract']).first()
+        returned = session.query(client_db).filter(client_db.contract == data.contract).first()
         if returned == None:
             return {
             "message": "The required OLT & ONT does not exists",
-            "contract": data["contract"],
+            "contract": data.contract,
         }
         else:
             print(f"Client Get Succefully {returned.contract} {returned.name_1}")
