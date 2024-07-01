@@ -78,6 +78,9 @@ async def action(db_data,oid_puerto,operation):
         }
     elif change_status['Cod'] == 200:
         print(f"Client Changed State {db_data.contract} {db_data.name_1} to {resulted_operation}")
+        db_data.state = resulted_operation
+        session.add(db_data)
+        session.commit()
         return {
             "message": f"Client Changed State {db_data.name_1} {db_data.name_2} to {resulted_operation}",
             "contract": db_data.contract,
