@@ -16,8 +16,10 @@ async def ops_clients(data: ClientList):
     # body = await request.body()  # Obtener el cuerpo de la solicitud
     # data = json.loads(body) 
     for client in data.clients:
-        res = StreamingResponse(await client_operate(client), media_type="application/json")
+        request = await client_operate(client)
+        res = StreamingResponse(request, media_type="application/json")
         # res = await client_operate(client)
         print(res)
+        print(request)
         print(data)
-    return res
+    return request
