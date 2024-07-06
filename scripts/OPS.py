@@ -89,8 +89,10 @@ async def action(db_data,oid_puerto,operation):
         db_data.state = resulted_operation
         session.add(db_data)
         session.commit()
-        return {
+        resp = {
             "message": f"Client Changed State {db_data.name_1} {db_data.name_2} to {resulted_operation}",
             "contract": db_data.contract,
         }
+        return resp 
+    return resp
 
