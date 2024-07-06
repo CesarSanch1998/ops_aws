@@ -19,10 +19,18 @@ async def client_operate(data):
     try:
         returned = session.query(client_db).filter(client_db.contract == data.contract).first()
         if returned == None:
-            return {
-            "message": "The required OLT & ONT does not exists",
+            resp = {
+            "message": "The required OLT & ONT does not exists in DB",
             "contract": data.contract,
         }
+            try:
+                filename = "registro_corte_" + datetime.now().strftime("%Y-%m-%d") + ".json"
+                with open(filename, mode='a') as f:
+                    json_string = json.dumps(resp, indent=4)
+                    f.write(json_string)
+            except PermissionError:
+                print(f"Error: No tienes permiso para escribir en el archivo {filename}")
+            return 
         else:
             print(f"Client Get Succefully {returned.contract} {returned.name_1}")
             resp = await comparer(returned,operation)

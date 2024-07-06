@@ -3,6 +3,7 @@ import json
 from scripts.OPS import *
 from puresnmp_olt.accions import Get,Get_async
 from schema.ops_model import ClientList
+from fastapi.responses import StreamingResponse
 
 OPS_request = APIRouter()
 
@@ -15,6 +16,7 @@ async def ops_clients(data: ClientList):
     # body = await request.body()  # Obtener el cuerpo de la solicitud
     # data = json.loads(body) 
     for client in data.clients:
-        res = await client_operate(client)
+        res = StreamingResponse(await client_operate(client), media_type="application/json")
+        # res = await client_operate(client)
         print(res)
-    return data
+    return res
