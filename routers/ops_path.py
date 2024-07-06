@@ -19,4 +19,5 @@ async def ops_clients(data: ClientList):
         res = StreamingResponse(await client_operate(client), media_type="application/json")
         # res = await client_operate(client)
         print(res)
+        print(data)
     return res
