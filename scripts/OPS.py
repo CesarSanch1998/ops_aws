@@ -75,24 +75,30 @@ async def comparer(db_data,operation):
 async def action(db_data,oid_puerto,operation):
     resulted_operation = "active" if  operation == 1 else "deactivated"
     result = "Reactivado" if operation == 1 else "Suspendido"
-
-    change_status = await Set_async(olt_devices[str(db_data.olt)],os.environ['SNMP_READ'],f"1.3.6.1.4.1.2011.6.128.1.1.2.46.1.1.{oid_puerto}.{db_data.onu_id}",operation,'int')
-    # print(change_status)
-    if change_status['Cod'] == 404:
-        # print("Error")
-        return {
-            "message": "No such name/oid",
-            "contract": db_data.contract,
-        }
-    elif change_status['Cod'] == 200:
-        print(f"Client Changed State {db_data.contract} {db_data.name_1} to {resulted_operation}")
-        db_data.state = resulted_operation
-        session.add(db_data)
-        session.commit()
-        resp = {
-            "message": f"Client Changed State {db_data.name_1} {db_data.name_2} to {resulted_operation}",
-            "contract": db_data.contract,
-        }
-        return resp 
-    return resp
+    try:
+        change_status = await Set_async(olt_devices[str(db_data.olt)],os.environ['SNMP_READ'],f"1.3.6.1.4.1.2011.6.128.1.1.2.46.1.1.{oid_puerto}.{db_data.onu_id}",operation,'int')
+        # print(change_status)
+        if change_status['Cod'] == 404:
+            # print("Error")
+            return {
+                "message": "No such name/oid",
+                "contract": db_data.contract,
+            }
+        elif change_status['Cod'] == 200:
+            print(f"Client Changed State {db_data.contract} {db_data.name_1} to {resulted_operation}")
+            db_data.state = resulted_operation
+            session.add(db_data)
+            session.commit()
+            resp = {
+                "message": f"Client Changed State {db_data.name_1} {db_data.name_2} to {resulted_operation}",
+                "contract": db_data.contract,
+            }
+            return resp 
+        return resp
+    except Exception as e:
+        session.rollback()
+        raise e  # o maneja la excepción de otra manera (registra el error, devuelve un mensaje, etc.)
+    finally:
+        session.close()
+        conn.close()
 
