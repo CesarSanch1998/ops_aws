@@ -24,7 +24,7 @@ async def client_operate(data):
             "contract": data.contract,
         }
             try:
-                filename = "/registro/registro_corte_" + datetime.now().strftime("%Y-%m-%d") + ".json"
+                filename = "registro_corte_" + datetime.now().strftime("%Y-%m-%d") + ".json"
                 with open(filename, mode='a') as f:
                     json_string = json.dumps(resp, indent=4)
                     f.write(json_string)
@@ -35,7 +35,7 @@ async def client_operate(data):
             print(f"Client Get Succefully {returned.contract} {returned.name_1}")
             resp = await comparer(returned,operation)
             try:
-                filename = "/registro/registro_corte_" + datetime.now().strftime("%Y-%m-%d") + ".json"
+                filename = "registro_corte_" + datetime.now().strftime("%Y-%m-%d") + ".json"
                 with open(filename, mode='a') as f:
                     json_string = json.dumps(resp, indent=4)
                     f.write(json_string)
