@@ -21,5 +21,5 @@ async def ops_clients(data: ClientList):
         # res = await client_operate(client)
         print(res)
         print(request)
-        print(data)
+        # print(data)
     return request
